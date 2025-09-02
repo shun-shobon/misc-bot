@@ -17,16 +17,14 @@ const quoteSlashCommand = new SlashCommandBuilder()
 			.setName("user")
 			.setDescription("名言を生成するユーザーを指定します。")
 			.setRequired(true),
-	)
-	.addStringOption((option) =>
-		option
-			.setName("text")
-			.setDescription("名言のテキストを指定します。")
-			.setRequired(true),
 	);
 
 const quoteMessageCommand = new ContextMenuCommandBuilder()
 	.setType(ApplicationCommandType.Message)
+	.setName("quote");
+
+const quoteUserCommand = new ContextMenuCommandBuilder()
+	.setType(ApplicationCommandType.User)
 	.setName("quote");
 
 const token = process.env["DISCORD_BOT_TOKEN"];
@@ -41,22 +39,20 @@ const commands = [
 	pingSlashCommand.toJSON(),
 	quoteSlashCommand.toJSON(),
 	quoteMessageCommand.toJSON(),
+	quoteUserCommand.toJSON(),
 ];
 
 const rest = new REST({ version: "10" }).setToken(token);
 
+// eslint-disable-next-line unicorn/prefer-ternary
 if (guildId != null) {
 	await rest.put(Routes.applicationGuildCommands(applicationId, guildId), {
 		body: commands,
 	});
 } else {
-	const a = await rest.put(Routes.applicationCommands(applicationId), {
+	await rest.put(Routes.applicationCommands(applicationId), {
 		body: commands,
 	});
-	console.log(a);
 }
-
-const a = await rest.get(Routes.applicationCommands(applicationId));
-console.log(a);
 
 console.log("Commands registered successfully");

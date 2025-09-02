@@ -5,6 +5,7 @@ import type {
 	APIInteraction,
 	APIInteractionResponse,
 	APIMessageApplicationCommandInteraction,
+	APIUserApplicationCommandInteraction,
 } from "discord-api-types/v10";
 import {
 	ApplicationCommandType,
@@ -17,7 +18,12 @@ import initYoga from "yoga-wasm-web";
 import WASM_YOGA from "yoga-wasm-web/dist/yoga.wasm";
 
 import { interactionVerifier } from "./discord";
-import { handleMessageCommand, handleSlashCommand } from "./handler";
+import {
+	handleMessageCommand,
+	handleModalSubmit,
+	handleSlashCommand,
+	handleUserCommand,
+} from "./handler";
 
 const yoga = await initYoga(WASM_YOGA);
 initSatori(yoga);
@@ -39,21 +45,16 @@ app
 			case InteractionType.ApplicationCommand:
 				switch (interaction.data.type) {
 					case ApplicationCommandType.ChatInput: {
-						const res = await handleSlashCommand(
-							c.env,
+						const res = handleSlashCommand(
 							interaction as APIChatInputApplicationCommandInteraction,
 						);
-
-						if (res instanceof Response) {
-							return res;
-						}
 
 						return c.json(res);
 					}
 					case ApplicationCommandType.Message: {
 						const res = await handleMessageCommand(
-							c.env,
 							interaction as APIMessageApplicationCommandInteraction,
+							c.env,
 						);
 
 						if (res instanceof Response) {
@@ -62,7 +63,24 @@ app
 
 						return c.json(res);
 					}
+					case ApplicationCommandType.User: {
+						const res = handleUserCommand(
+							interaction as APIUserApplicationCommandInteraction,
+						);
+
+						return c.json(res);
+					}
 				}
+				break;
+			case InteractionType.ModalSubmit: {
+				const res = await handleModalSubmit(interaction, c.env);
+
+				if (res instanceof Response) {
+					return res;
+				}
+
+				return c.json(res);
+			}
 		}
 
 		return c.text("Unknown interaction type", 400);

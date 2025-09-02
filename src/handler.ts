@@ -4,21 +4,27 @@ import type {
 	APIGuildMember,
 	APIInteractionResponse,
 	APIMessageApplicationCommandInteraction,
+	APIModalSubmitInteraction,
+	APIModalSubmitTextInputComponent,
+	APIUserApplicationCommandInteraction,
+	ModalSubmitLabelComponent,
 } from "discord-api-types/v10";
 import {
 	ApplicationCommandOptionType,
+	ComponentType,
 	InteractionResponseType,
+	MessageFlags,
 	Routes,
+	TextInputStyle,
 } from "discord-api-types/v10";
 import { match, P } from "ts-pattern";
 
 import { parseCommand } from "./discord";
 import { generateImage } from "./image";
 
-export async function handleSlashCommand(
-	env: Env,
+export function handleSlashCommand(
 	interaction: APIChatInputApplicationCommandInteraction,
-): Promise<APIInteractionResponse | Response> {
+): APIInteractionResponse {
 	const result = parseCommand(interaction.data);
 
 	const response = match(result)
@@ -28,6 +34,7 @@ export async function handleSlashCommand(
 				type: InteractionResponseType.ChannelMessageWithSource,
 				data: {
 					content: "pong!",
+					flags: MessageFlags.Ephemeral,
 				},
 			}),
 		)
@@ -36,49 +43,71 @@ export async function handleSlashCommand(
 				commands: ["quote"],
 				options: {
 					user: P.when((o) => o.type === ApplicationCommandOptionType.User),
-					text: P.when((o) => o.type === ApplicationCommandOptionType.String),
 				},
 			},
-			async ({ options: { user, text } }) => {
-				const userId = user.value;
-				const textValue = text.value;
-
-				return await handleQuoteSlashCommand(env, userId, textValue);
-			},
+			({ options: { user } }) => createQuoteModal(user.value),
 		)
-		.with(
-			P._,
-			(): APIInteractionResponse => ({
-				type: InteractionResponseType.ChannelMessageWithSource,
-				data: {
-					content: "未知のコマンドです。",
-				},
-			}),
-		)
+		.with(P._, (): APIInteractionResponse => createErrorMessage())
 		.exhaustive();
 
-	return await response;
+	return response;
 }
 
 export async function handleMessageCommand(
-	env: Env,
 	interaction: APIMessageApplicationCommandInteraction,
+	env: Env,
 ): Promise<APIInteractionResponse | Response> {
 	switch (interaction.data.name) {
 		case "quote":
 			return await handleQuoteMessageCommand(env, interaction);
 	}
 
-	const res: APIInteractionResponse = {
-		type: InteractionResponseType.ChannelMessageWithSource,
-		data: {
-			content: "未知のコマンドです。",
-		},
-	};
-	return res;
+	return createErrorMessage();
 }
 
-async function handleQuoteSlashCommand(env: Env, userId: string, text: string) {
+export function handleUserCommand(
+	interaction: APIUserApplicationCommandInteraction,
+): APIInteractionResponse {
+	switch (interaction.data.name) {
+		case "quote":
+			return createQuoteModal(interaction.data.target_id);
+	}
+
+	return createErrorMessage();
+}
+
+export async function handleModalSubmit(
+	interaction: APIModalSubmitInteraction,
+	env: Env,
+): Promise<APIInteractionResponse | Response> {
+	const customId = interaction.data.custom_id;
+	const [command, ...rest] = customId.split(":");
+
+	switch (command) {
+		case "quote": {
+			const userId = rest[0]!;
+
+			return await handleQuoteModalSubmit(interaction, userId, env);
+		}
+	}
+
+	return createErrorMessage();
+}
+
+async function handleQuoteModalSubmit(
+	interaction: APIModalSubmitInteraction,
+	userId: string,
+	env: Env,
+) {
+	const textInput = (
+		interaction.data.components[0] as ModalSubmitLabelComponent
+	).component as APIModalSubmitTextInputComponent;
+	if (textInput.custom_id !== "text") {
+		throw new Error("Invalid custom id");
+	}
+
+	const text = textInput.value;
+
 	const rest = new REST({ version: "10" }).setToken(env.DISCORD_BOT_TOKEN);
 
 	const member = (await rest.get(
@@ -184,4 +213,35 @@ function getIconUrl(env: Env, rest: REST, member: APIGuildMember) {
 	return rest.cdn.defaultAvatar(
 		calculateUserDefaultAvatarIndex(member.user.id),
 	);
+}
+
+function createQuoteModal(userId: string): APIInteractionResponse {
+	return {
+		type: InteractionResponseType.Modal,
+		data: {
+			custom_id: `quote:${userId}`,
+			title: "名言画像を生成",
+			components: [
+				{
+					type: ComponentType.Label,
+					label: "内容",
+					component: {
+						type: ComponentType.TextInput,
+						custom_id: "text",
+						style: TextInputStyle.Paragraph,
+					},
+				},
+			],
+		},
+	};
+}
+
+function createErrorMessage(): APIInteractionResponse {
+	return {
+		type: InteractionResponseType.ChannelMessageWithSource,
+		data: {
+			content: "# このメッセージが 見れるのは おかしいよ",
+			flags: MessageFlags.Ephemeral,
+		},
+	};
 }
