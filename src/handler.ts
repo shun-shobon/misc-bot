@@ -3,6 +3,7 @@ import type {
 	APIChatInputApplicationCommandInteraction,
 	APIGuildMember,
 	APIInteractionResponse,
+	APIMessageApplicationCommandInteraction,
 } from "discord-api-types/v10";
 import {
 	ApplicationCommandOptionType,
@@ -42,7 +43,7 @@ export async function handleSlashCommand(
 				const userId = user.value;
 				const textValue = text.value;
 
-				return await handleQuoteCommand(env, userId, textValue);
+				return await handleQuoteSlashCommand(env, userId, textValue);
 			},
 		)
 		.with(
@@ -59,13 +60,73 @@ export async function handleSlashCommand(
 	return await response;
 }
 
-async function handleQuoteCommand(env: Env, userId: string, text: string) {
+export async function handleMessageCommand(
+	env: Env,
+	interaction: APIMessageApplicationCommandInteraction,
+): Promise<APIInteractionResponse | Response> {
+	switch (interaction.data.name) {
+		case "quote":
+			return await handleQuoteMessageCommand(env, interaction);
+	}
+
+	const res: APIInteractionResponse = {
+		type: InteractionResponseType.ChannelMessageWithSource,
+		data: {
+			content: "未知のコマンドです。",
+		},
+	};
+	return res;
+}
+
+async function handleQuoteSlashCommand(env: Env, userId: string, text: string) {
 	const rest = new REST({ version: "10" }).setToken(env.DISCORD_BOT_TOKEN);
 
 	const member = (await rest.get(
 		Routes.guildMember(env.DISCORD_GUILD_ID, userId),
 	)) as APIGuildMember;
 
+	const iconUrl = getIconUrl(env, rest, member);
+
+	const image = await generateImage({
+		iconUrl,
+		text,
+		name: member.nick ?? member.user.global_name ?? member.user.username,
+		id: member.user.username,
+	});
+
+	const formData = new FormData();
+
+	const payload: APIInteractionResponse = {
+		type: InteractionResponseType.ChannelMessageWithSource,
+		data: {
+			attachments: [
+				{
+					id: 0,
+					filename: "quote.png",
+				},
+			],
+		},
+	};
+
+	formData.set("payload_json", JSON.stringify(payload));
+	formData.set(
+		"files[0]",
+		new Blob([image], { type: "image/png" }),
+		"image.png",
+	);
+
+	return new Response(formData, { status: 200 });
+}
+
+async function handleQuoteMessageCommand(
+	env: Env,
+	interaction: APIMessageApplicationCommandInteraction,
+) {
+	const rest = new REST({ version: "10" }).setToken(env.DISCORD_BOT_TOKEN);
+
+	const member = interaction.member!;
+	const text =
+		interaction.data.resolved.messages[interaction.data.target_id]!.content;
 	const iconUrl = getIconUrl(env, rest, member);
 
 	const image = await generateImage({

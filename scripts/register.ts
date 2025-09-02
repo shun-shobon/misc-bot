@@ -1,12 +1,15 @@
-import { SlashCommandBuilder } from "@discordjs/builders";
+import {
+	ContextMenuCommandBuilder,
+	SlashCommandBuilder,
+} from "@discordjs/builders";
 import { REST } from "@discordjs/rest";
-import { Routes } from "discord-api-types/v10";
+import { ApplicationCommandType, Routes } from "discord-api-types/v10";
 
-const pingCommand = new SlashCommandBuilder()
+const pingSlashCommand = new SlashCommandBuilder()
 	.setName("ping")
 	.setDescription("pingをBotに送ります。");
 
-const quoteCommand = new SlashCommandBuilder()
+const quoteSlashCommand = new SlashCommandBuilder()
 	.setName("quote")
 	.setDescription("任意のユーザーの名言画像を生成します。")
 	.addUserOption((option) =>
@@ -22,6 +25,10 @@ const quoteCommand = new SlashCommandBuilder()
 			.setRequired(true),
 	);
 
+const quoteMessageCommand = new ContextMenuCommandBuilder()
+	.setType(ApplicationCommandType.Message)
+	.setName("quote");
+
 const token = process.env["DISCORD_BOT_TOKEN"];
 const applicationId = process.env["DISCORD_APPLICATION_ID"];
 const guildId = process.env["DISCORD_GUILD_ID"];
@@ -30,7 +37,11 @@ if (!token || !applicationId) {
 	throw new Error("DISCORD_TOKEN or DISCORD_APPLICATION_ID is not set");
 }
 
-const commands = [pingCommand.toJSON(), quoteCommand.toJSON()];
+const commands = [
+	pingSlashCommand.toJSON(),
+	quoteSlashCommand.toJSON(),
+	quoteMessageCommand.toJSON(),
+];
 
 const rest = new REST({ version: "10" }).setToken(token);
 

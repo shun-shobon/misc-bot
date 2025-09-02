@@ -4,6 +4,7 @@ import type {
 	APIChatInputApplicationCommandInteraction,
 	APIInteraction,
 	APIInteractionResponse,
+	APIMessageApplicationCommandInteraction,
 } from "discord-api-types/v10";
 import {
 	ApplicationCommandType,
@@ -16,7 +17,7 @@ import initYoga from "yoga-wasm-web";
 import WASM_YOGA from "yoga-wasm-web/dist/yoga.wasm";
 
 import { interactionVerifier } from "./discord";
-import { handleSlashCommand } from "./handler";
+import { handleMessageCommand, handleSlashCommand } from "./handler";
 
 const yoga = await initYoga(WASM_YOGA);
 initSatori(yoga);
@@ -41,6 +42,18 @@ app
 						const res = await handleSlashCommand(
 							c.env,
 							interaction as APIChatInputApplicationCommandInteraction,
+						);
+
+						if (res instanceof Response) {
+							return res;
+						}
+
+						return c.json(res);
+					}
+					case ApplicationCommandType.Message: {
+						const res = await handleMessageCommand(
+							c.env,
+							interaction as APIMessageApplicationCommandInteraction,
 						);
 
 						if (res instanceof Response) {
