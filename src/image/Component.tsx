@@ -44,13 +44,18 @@ export function Component({ iconSrc, text, name, id }: Props): ReactNode {
 					gap: "24px",
 				}}
 			>
-				<span
+				<div
 					style={{
+						display: "flex",
+						flexDirection: "column",
+						alignItems: "center",
 						textAlign: "center",
 					}}
 				>
-					{text}
-				</span>
+					{text.split("\n").map((line, index) => (
+						<span key={index}>{line}</span>
+					))}
+				</div>
 				<div
 					style={{
 						display: "flex",
