@@ -1,0 +1,6 @@
+name = "make-it-a-quote"
+compatibility_date = "2025-09-01"
+main = "src/index.ts"
+
+[observability]
+enabled = true

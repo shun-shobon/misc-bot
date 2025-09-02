@@ -1,0 +1,7 @@
+saveExact: true
+
+onlyBuiltDependencies:
+  - esbuild
+  - sharp
+  - unrs-resolver
+  - workerd

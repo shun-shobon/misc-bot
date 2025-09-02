@@ -1,0 +1,46 @@
+{
+	"name": "make-it-a-quote",
+	"version": "0.0.1",
+	"type": "module",
+	"author": "NISHIZAWA Shuntaro <me@s2n.tech>",
+	"license": "MIT",
+	"private": true,
+	"packageManager": "pnpm@10.15.1",
+	"main": "dist/index.js",
+	"scripts": {
+		"build": "wrangler deploy --dry-run --minify --outdir dist",
+		"deploy": "wrangler deploy --minify",
+		"dev": "wrangler dev",
+		"format": "prettier --write .",
+		"format:check": "prettier --check .",
+		"lint": "eslint",
+		"lint:fix": "eslint --fix",
+		"register": "node --experimental-transform-types scripts/register.ts",
+		"start": "wrangler dev",
+		"typecheck": "tsc --noEmit",
+		"typegen": "wrangler types"
+	},
+	"dependencies": {
+		"@discordjs/builders": "1.11.3",
+		"@discordjs/rest": "2.6.0",
+		"@resvg/resvg-wasm": "2.4.1",
+		"discord-interactions": "4.3.0",
+		"hono": "4.9.5",
+		"react": "19.1.1",
+		"satori": "0.15.2",
+		"ts-pattern": "5.8.0",
+		"yoga-wasm-web": "0.3.3"
+	},
+	"devDependencies": {
+		"@shun-shobon/style-guide": "1.1.0",
+		"@tsconfig/node-lts": "22.0.2",
+		"@tsconfig/strictest": "2.0.5",
+		"@types/node": "24.3.0",
+		"@types/react": "19.1.12",
+		"discord-api-types": "0.38.22",
+		"eslint": "9.34.0",
+		"prettier": "3.6.2",
+		"typescript": "5.9.2",
+		"wrangler": "4.33.1"
+	}
+}
