@@ -1,4 +1,4 @@
-name = "make-it-a-quote"
+name = "misc-bot"
 compatibility_date = "2025-09-01"
 main = "src/index.ts"
 

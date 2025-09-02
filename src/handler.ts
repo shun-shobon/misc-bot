@@ -124,9 +124,13 @@ async function handleQuoteMessageCommand(
 ) {
 	const rest = new REST({ version: "10" }).setToken(env.DISCORD_BOT_TOKEN);
 
-	const member = interaction.member!;
-	const text =
-		interaction.data.resolved.messages[interaction.data.target_id]!.content;
+	const message =
+		interaction.data.resolved.messages[interaction.data.target_id]!;
+	const member = (await rest.get(
+		Routes.guildMember(env.DISCORD_GUILD_ID, message.author.id),
+	)) as APIGuildMember;
+
+	const text = message.content;
 	const iconUrl = getIconUrl(env, rest, member);
 
 	const image = await generateImage({

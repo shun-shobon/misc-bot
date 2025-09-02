@@ -45,15 +45,18 @@ const commands = [
 
 const rest = new REST({ version: "10" }).setToken(token);
 
-// eslint-disable-next-line unicorn/prefer-ternary
 if (guildId != null) {
 	await rest.put(Routes.applicationGuildCommands(applicationId, guildId), {
 		body: commands,
 	});
 } else {
-	await rest.put(Routes.applicationCommands(applicationId), {
+	const a = await rest.put(Routes.applicationCommands(applicationId), {
 		body: commands,
 	});
+	console.log(a);
 }
+
+const a = await rest.get(Routes.applicationCommands(applicationId));
+console.log(a);
 
 console.log("Commands registered successfully");
