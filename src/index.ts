@@ -52,15 +52,11 @@ app
 						return c.json(res);
 					}
 					case ApplicationCommandType.Message: {
-						const res = await handleMessageCommand(
+						const res = handleMessageCommand(
 							interaction as APIMessageApplicationCommandInteraction,
 							c.env,
+							c.executionCtx,
 						);
-
-						if (res instanceof Response) {
-							return res;
-						}
-
 						return c.json(res);
 					}
 					case ApplicationCommandType.User: {
@@ -71,13 +67,14 @@ app
 						return c.json(res);
 					}
 				}
+
 				break;
 			case InteractionType.ModalSubmit: {
-				const res = await handleModalSubmit(interaction, c.env);
-
-				if (res instanceof Response) {
-					return res;
-				}
+				const res = handleModalSubmit(
+					interaction,
+					c.env,
+					c.executionCtx,
+				);
 
 				return c.json(res);
 			}

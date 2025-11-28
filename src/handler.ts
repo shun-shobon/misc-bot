@@ -4,6 +4,7 @@ import type {
 	APIGuildMember,
 	APIInteractionResponse,
 	APIMessageApplicationCommandInteraction,
+	APIMessageTopLevelComponent,
 	APIModalSubmitInteraction,
 	APIModalSubmitTextInputComponent,
 	APIUserApplicationCommandInteraction,
@@ -53,13 +54,14 @@ export function handleSlashCommand(
 	return response;
 }
 
-export async function handleMessageCommand(
+export function handleMessageCommand(
 	interaction: APIMessageApplicationCommandInteraction,
 	env: Env,
-): Promise<APIInteractionResponse | Response> {
+	ctx: ExecutionContext,
+): APIInteractionResponse {
 	switch (interaction.data.name) {
 		case "quote":
-			return await handleQuoteMessageCommand(env, interaction);
+			return handleQuoteMessageCommand(env, interaction, ctx);
 	}
 
 	return createErrorMessage();
@@ -76,10 +78,11 @@ export function handleUserCommand(
 	return createErrorMessage();
 }
 
-export async function handleModalSubmit(
+export function handleModalSubmit(
 	interaction: APIModalSubmitInteraction,
 	env: Env,
-): Promise<APIInteractionResponse | Response> {
+	ctx: ExecutionContext,
+): APIInteractionResponse {
 	const customId = interaction.data.custom_id;
 	const [command, ...rest] = customId.split(":");
 
@@ -87,18 +90,19 @@ export async function handleModalSubmit(
 		case "quote": {
 			const userId = rest[0]!;
 
-			return await handleQuoteModalSubmit(interaction, userId, env);
+			return handleQuoteModalSubmit(interaction, userId, env, ctx);
 		}
 	}
 
 	return createErrorMessage();
 }
 
-async function handleQuoteModalSubmit(
+function handleQuoteModalSubmit(
 	interaction: APIModalSubmitInteraction,
 	userId: string,
 	env: Env,
-) {
+	ctx: ExecutionContext,
+): APIInteractionResponse {
 	const textInput = (
 		interaction.data.components[0] as ModalSubmitLabelComponent
 	).component as APIModalSubmitTextInputComponent;
@@ -108,89 +112,142 @@ async function handleQuoteModalSubmit(
 
 	const text = textInput.value;
 
-	const rest = new REST({ version: "10" }).setToken(env.DISCORD_BOT_TOKEN);
-
-	const member = (await rest.get(
-		Routes.guildMember(env.DISCORD_GUILD_ID, userId),
-	)) as APIGuildMember;
-
-	const iconUrl = getIconUrl(env, rest, member);
-
-	const image = await generateImage({
-		iconUrl,
-		text,
-		name: member.nick ?? member.user.global_name ?? member.user.username,
-		id: member.user.username,
+	enqueueFollowUp(ctx, async () => {
+		await sendQuoteFollowUp({
+			interaction,
+			env,
+			memberId: userId,
+			text,
+		});
 	});
 
-	const formData = new FormData();
-
-	const payload: APIInteractionResponse = {
-		type: InteractionResponseType.ChannelMessageWithSource,
-		data: {
-			attachments: [
-				{
-					id: 0,
-					filename: "quote.png",
-				},
-			],
-		},
-	};
-
-	formData.set("payload_json", JSON.stringify(payload));
-	formData.set(
-		"files[0]",
-		new Blob([image], { type: "image/png" }),
-		"image.png",
-	);
-
-	return new Response(formData, { status: 200 });
+	return createDeferredMessage();
 }
 
-async function handleQuoteMessageCommand(
+function handleQuoteMessageCommand(
 	env: Env,
 	interaction: APIMessageApplicationCommandInteraction,
-) {
-	const rest = new REST({ version: "10" }).setToken(env.DISCORD_BOT_TOKEN);
-
+	ctx: ExecutionContext,
+): APIInteractionResponse {
 	const message =
 		interaction.data.resolved.messages[interaction.data.target_id]!;
-	const member = (await rest.get(
-		Routes.guildMember(env.DISCORD_GUILD_ID, message.author.id),
-	)) as APIGuildMember;
 
-	const text = message.content;
-	const iconUrl = getIconUrl(env, rest, member);
-
-	const image = await generateImage({
-		iconUrl,
-		text,
-		name: member.nick ?? member.user.global_name ?? member.user.username,
-		id: member.user.username,
+	enqueueFollowUp(ctx, async () => {
+		await sendQuoteFollowUp({
+			interaction,
+			env,
+			memberId: message.author.id,
+			text: message.content,
+		});
 	});
 
-	const formData = new FormData();
+	return createDeferredMessage();
+}
 
-	const payload: APIInteractionResponse = {
-		type: InteractionResponseType.ChannelMessageWithSource,
-		data: {
-			attachments: [
-				{
-					id: 0,
-					filename: "quote.png",
+function enqueueFollowUp(
+	ctx: ExecutionContext,
+	promiseFactory: () => Promise<void>,
+): void {
+	ctx.waitUntil(
+		(async () => {
+			try {
+				await promiseFactory();
+			} catch (error) {
+				console.error("Failed to send quote follow-up", error);
+			}
+		})(),
+	);
+}
+
+async function sendQuoteFollowUp({
+	interaction,
+	env,
+	memberId,
+	text,
+}: {
+	interaction:
+		| APIModalSubmitInteraction
+		| APIMessageApplicationCommandInteraction;
+	env: Env;
+	memberId: string;
+	text: string;
+}): Promise<void> {
+	const rest = new REST({ version: "10" }).setToken(env.DISCORD_BOT_TOKEN);
+
+	try {
+		const member = (await rest.get(
+			Routes.guildMember(env.DISCORD_GUILD_ID, memberId),
+		)) as APIGuildMember;
+
+		const iconUrl = getIconUrl(env, rest, member);
+
+		const image = await generateImage({
+			iconUrl,
+			text,
+			name: member.nick ?? member.user.global_name ?? member.user.username,
+			id: member.user.username,
+		});
+
+		await rest.patch(
+			Routes.webhookMessage(interaction.application_id, interaction.token),
+			{
+				body: {
+					attachments: [
+						{
+							id: 0,
+							filename: "quote.png",
+						},
+					],
 				},
-			],
-		},
+				files: [
+					{
+						data: image,
+						name: "image.png",
+					},
+				],
+			},
+		);
+	} catch (error) {
+		await sendErrorFollowUp(rest, interaction, error);
+	}
+}
+
+async function sendErrorFollowUp(
+	rest: REST,
+	interaction:
+		| APIModalSubmitInteraction
+		| APIMessageApplicationCommandInteraction,
+	error: unknown,
+): Promise<void> {
+	console.error("Failed to send error follow-up", error);
+	const message =
+		error instanceof Error ? (error.stack ?? error.message) : String(error);
+
+	const component: APIMessageTopLevelComponent = {
+		type: ComponentType.Container,
+		accent_color: 0xff_33_33,
+		components: [
+			{
+				type: ComponentType.TextDisplay,
+				content: [
+					"### エラーが発生しました <@361444721538891776>",
+					"```",
+					message,
+					"```",
+				].join("\n"),
+			},
+		],
 	};
 
-	formData.set("payload_json", JSON.stringify(payload));
-	formData.set(
-		"files[0]",
-		new Blob([image], { type: "image/png" }),
-		"image.png",
+	await rest.patch(
+		Routes.webhookMessage(interaction.application_id, interaction.token),
+		{
+			body: {
+				flags: MessageFlags.IsComponentsV2,
+				components: [component],
+			},
+		},
 	);
-
-	return new Response(formData, { status: 200 });
 }
 
 function getIconUrl(env: Env, rest: REST, member: APIGuildMember) {
@@ -236,12 +293,32 @@ function createQuoteModal(userId: string): APIInteractionResponse {
 	};
 }
 
+function createDeferredMessage(): APIInteractionResponse {
+	return {
+		type: InteractionResponseType.DeferredChannelMessageWithSource,
+	};
+}
+
 function createErrorMessage(): APIInteractionResponse {
+	const component: APIMessageTopLevelComponent = {
+		type: ComponentType.Container,
+		accent_color: 0xff_33_33,
+		components: [
+			{
+				type: ComponentType.TextDisplay,
+				content: [
+					"### エラーが発生しました <@361444721538891776>",
+					"存在しないコマンドが実行されました。",
+				].join("\n"),
+			},
+		],
+	};
+
 	return {
 		type: InteractionResponseType.ChannelMessageWithSource,
 		data: {
-			content: "# このメッセージが 見れるのは おかしいよ",
-			flags: MessageFlags.Ephemeral,
+			flags: MessageFlags.IsComponentsV2,
+			components: [component],
 		},
 	};
 }

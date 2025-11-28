@@ -55,4 +55,4 @@ if (guildId != null) {
 	});
 }
 
-console.log("Commands registered successfully");
+	console.warn("Commands registered successfully");
