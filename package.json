@@ -17,6 +17,7 @@
 		"lint:fix": "eslint --fix",
 		"register": "node --experimental-transform-types scripts/register.ts",
 		"start": "wrangler dev",
+		"test": "vitest run",
 		"typecheck": "tsc --noEmit",
 		"typegen": "wrangler types"
 	},
@@ -42,6 +43,7 @@
 		"eslint": "9.34.0",
 		"prettier": "3.6.2",
 		"typescript": "5.9.2",
+		"vitest": "4.0.14",
 		"wrangler": "4.33.1"
 	}
 }
