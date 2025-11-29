@@ -344,7 +344,7 @@ export async function renderMarkdown(
 	return <div style={styles.root}>{children}</div>;
 }
 
-function normalizeLineBreaks(input: string): string {
+export function normalizeLineBreaks(input: string): string {
 	const lines = input.replaceAll(/\r\n?/gu, "\n").split("\n");
 	let inFence = false;
 	const out: string[] = [];
