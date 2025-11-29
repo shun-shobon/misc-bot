@@ -96,8 +96,11 @@ interface RenderContext {
 const TEXT_ORDER = SimpleMarkdown.defaultRules.text.order;
 const EM_ORDER = SimpleMarkdown.defaultRules.em.order;
 
-const rules = {
-	...SimpleMarkdown.defaultRules,
+const rules: ParserRules = {
+	...(SimpleMarkdown.defaultRules as Omit<
+		typeof SimpleMarkdown.defaultRules,
+		"Array"
+	>),
 	mention: {
 		order: TEXT_ORDER - 0.5,
 		match: SimpleMarkdown.inlineRegex(/^<@!?(?<id>\d+)>/u),
@@ -123,7 +126,7 @@ const rules = {
 			content: parse((capture[0] ?? "").slice(2, -2), state),
 		}),
 	},
-} as unknown as ParserRules;
+};
 
 const parser = SimpleMarkdown.parserFor(rules);
 
@@ -193,7 +196,7 @@ const styles = {
 	em: { transform: "skew(-10deg)" },
 	del: { textDecoration: "line-through" },
 	inlineCode: {
-		fontFamily: "'Noto Sans Mono'",
+		fontFamily: "'Noto Sans Mono', 'Noto Sans JP'",
 		fontSize: "28px",
 		backgroundColor: "#1c1c1c",
 		padding: "2px 6px",
@@ -201,7 +204,7 @@ const styles = {
 	},
 	codeBlock: {
 		display: "flex",
-		fontFamily: "'Noto Sans Mono'",
+		fontFamily: "'Noto Sans Mono', 'Noto Sans JP'",
 		fontSize: "28px",
 		backgroundColor: "#111",
 		padding: "12px",
