@@ -133,28 +133,28 @@ const parser = SimpleMarkdown.parserFor(rules);
 const styles = {
 	root: {
 		display: "flex",
-		flexDirection: "column" as const,
-		alignItems: "stretch" as const,
+		flexDirection: "column",
+		alignItems: "stretch",
 		gap: "12px",
 		width: "100%",
 		color: "#fafafa",
-		textAlign: "center" as const,
+		textAlign: "center",
 	},
 	paragraph: {
 		display: "flex",
-		flexWrap: "wrap" as const,
+		flexWrap: "wrap",
 		alignItems: "baseline",
-		justifyContent: "center" as const,
+		justifyContent: "center",
 		gap: "4px",
 		fontSize: "32px",
 		lineHeight: 1.5,
-		wordBreak: "break-word" as const,
+		wordBreak: "break-word",
 	},
 	heading: [
 		{},
 		{
 			display: "flex",
-			flexWrap: "wrap" as const,
+			flexWrap: "wrap",
 			alignItems: "baseline",
 			gap: "6px",
 			fontSize: "42px",
@@ -162,7 +162,7 @@ const styles = {
 		},
 		{
 			display: "flex",
-			flexWrap: "wrap" as const,
+			flexWrap: "wrap",
 			alignItems: "baseline",
 			gap: "6px",
 			fontSize: "38px",
@@ -170,7 +170,7 @@ const styles = {
 		},
 		{
 			display: "flex",
-			flexWrap: "wrap" as const,
+			flexWrap: "wrap",
 			alignItems: "baseline",
 			gap: "6px",
 			fontSize: "34px",
@@ -179,7 +179,7 @@ const styles = {
 	],
 	blockquote: {
 		display: "flex",
-		flexDirection: "column" as const,
+		flexDirection: "column",
 		gap: "6px",
 		borderLeft: "4px solid #666",
 		paddingLeft: "12px",
@@ -187,7 +187,7 @@ const styles = {
 	},
 	list: {
 		display: "flex",
-		flexDirection: "column" as const,
+		flexDirection: "column",
 		gap: "6px",
 		paddingLeft: "24px",
 		lineHeight: 1.5,
@@ -209,7 +209,7 @@ const styles = {
 		backgroundColor: "#111",
 		padding: "12px",
 		borderRadius: "8px",
-		whiteSpace: "pre-wrap" as const,
+		whiteSpace: "pre-wrap",
 	},
 	link: { color: "#7cc7ff", textDecoration: "underline" },
 	mention: {
@@ -237,10 +237,10 @@ const styles = {
 	customEmoji: {
 		height: "1.2em",
 		width: "1.2em",
-		objectFit: "contain" as const,
-		verticalAlign: "middle" as const,
+		objectFit: "contain",
+		verticalAlign: "middle",
 	},
-} as const;
+} satisfies Record<string, React.CSSProperties | React.CSSProperties[]>;
 
 async function renderNodes(
 	nodes: MarkdownAst,
