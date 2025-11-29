@@ -5,26 +5,37 @@ import { encodeBase64 } from "../utils";
 import { Component } from "./Component";
 import { loadEmoji } from "./emoji";
 import { fetchFont } from "./font";
+import type { MentionMap } from "./markdown";
+import { renderMarkdown } from "./markdown";
 
 interface Params {
 	iconUrl: string;
 	text: string;
 	name: string;
 	id: string;
+	mentionNames?: MentionMap;
 }
 
 export async function generateImage(params: Params): Promise<Uint8Array> {
-	const text = `${params.text}${params.name}${params.id}@`;
+	const mentionNames = params.mentionNames ?? {};
+	const textSeed = `${params.text}${params.name}${params.id}@${Object.values(mentionNames).join("")}`;
 
-	const [font, iconSrc] = await Promise.all([
-		fetchFont(text, "Noto Sans JP", 400),
+	const content = await renderMarkdown(params.text, {
+		mentionNames,
+		loadCustomEmoji,
+	});
+
+	const [fontRegular, fontBold, fontMono, iconSrc] = await Promise.all([
+		fetchFont(textSeed, "Noto Sans JP", 400),
+		fetchFont(textSeed, "Noto Sans JP", 700),
+		fetchFont(textSeed, "Noto Sans Mono", 400),
 		fetchIcon(params.iconUrl),
 	]);
 
 	const svg = await satori(
 		<Component
 			iconSrc={iconSrc}
-			text={params.text}
+			content={content}
 			name={params.name}
 			id={params.id}
 		/>,
@@ -34,7 +45,17 @@ export async function generateImage(params: Params): Promise<Uint8Array> {
 			fonts: [
 				{
 					name: "Noto Sans JP",
-					data: font,
+					data: fontRegular,
+					weight: 400,
+				},
+				{
+					name: "Noto Sans JP",
+					data: fontBold,
+					weight: 700,
+				},
+				{
+					name: "Noto Sans Mono",
+					data: fontMono,
 					weight: 400,
 				},
 			],
@@ -67,4 +88,35 @@ async function fetchIcon(iconSrc: string): Promise<string> {
 	const base64 = encodeBase64(await blob.arrayBuffer());
 
 	return `data:${blob.type};base64,${base64}`;
+}
+
+const customEmojiCache = new Map<string, string>();
+
+async function loadCustomEmoji(id: string, animated: boolean): Promise<string> {
+	const key = `${id}:${animated ? "a" : "s"}`;
+	const cached = customEmojiCache.get(key);
+	if (cached != null) {
+		return cached;
+	}
+
+	const ext = animated ? "gif" : "png";
+	const url = `https://cdn.discordapp.com/emojis/${id}.${ext}`;
+	const res = await fetch(url);
+
+	if (!res.ok && animated) {
+		// アニメGIFが無い場合はPNGをフォールバック
+		return await loadCustomEmoji(id, false);
+	}
+
+	if (!res.ok) {
+		throw new Error(`Failed to fetch custom emoji: ${id}`);
+	}
+
+	const blob = await res.blob();
+	const base64 = encodeBase64(await blob.arrayBuffer());
+	const dataUrl = `data:${blob.type};base64,${base64}`;
+
+	customEmojiCache.set(key, dataUrl);
+
+	return dataUrl;
 }

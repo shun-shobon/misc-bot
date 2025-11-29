@@ -178,6 +178,12 @@ async function sendQuoteFollowUp({
 		const member = (await rest.get(
 			Routes.guildMember(env.DISCORD_GUILD_ID, memberId),
 		)) as APIGuildMember;
+		const mentionNames = await resolveMentionDisplayNames({
+			rest,
+			env,
+			text,
+			selfMember: member,
+		});
 
 		const iconUrl = getIconUrl(env, rest, member);
 
@@ -186,6 +192,7 @@ async function sendQuoteFollowUp({
 			text,
 			name: member.nick ?? member.user.global_name ?? member.user.username,
 			id: member.user.username,
+			mentionNames,
 		});
 
 		await rest.patch(
@@ -270,6 +277,62 @@ function getIconUrl(env: Env, rest: REST, member: APIGuildMember) {
 	return rest.cdn.defaultAvatar(
 		calculateUserDefaultAvatarIndex(member.user.id),
 	);
+}
+
+function extractMentionUserIds(text: string): string[] {
+	const pattern = /<@!?(?<id>\d+)>/gu;
+	const ids = new Set<string>();
+	let match: RegExpExecArray | null;
+
+	while ((match = pattern.exec(text)) != null) {
+		const id = match.groups?.["id"];
+		if (id != null) {
+			ids.add(id);
+		}
+	}
+
+	return [...ids];
+}
+
+async function resolveMentionDisplayNames({
+	rest,
+	env,
+	text,
+	selfMember,
+}: {
+	rest: REST;
+	env: Env;
+	text: string;
+	selfMember: APIGuildMember;
+}): Promise<Record<string, string>> {
+	const ids = extractMentionUserIds(text);
+	if (ids.length === 0) {
+		return {};
+	}
+
+	const mentionNames: Record<string, string> = {};
+
+	// 既に取得済みの対象メンバーを再利用
+	mentionNames[selfMember.user.id] =
+		selfMember.nick ?? selfMember.user.global_name ?? selfMember.user.username;
+	for (const id of ids) {
+		if (mentionNames[id] != null) {
+			continue;
+		}
+
+		try {
+			const member = (await rest.get(
+				Routes.guildMember(env.DISCORD_GUILD_ID, id),
+			)) as APIGuildMember;
+			mentionNames[id] =
+				member.nick ?? member.user.global_name ?? member.user.username;
+		} catch (error) {
+			console.warn("Failed to resolve mention", { id, error });
+			mentionNames[id] = "unknown";
+		}
+	}
+
+	return mentionNames;
 }
 
 function createQuoteModal(userId: string): APIInteractionResponse {

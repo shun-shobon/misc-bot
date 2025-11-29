@@ -70,11 +70,7 @@ app
 
 				break;
 			case InteractionType.ModalSubmit: {
-				const res = handleModalSubmit(
-					interaction,
-					c.env,
-					c.executionCtx,
-				);
+				const res = handleModalSubmit(interaction, c.env, c.executionCtx);
 
 				return c.json(res);
 			}

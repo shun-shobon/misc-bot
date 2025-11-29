@@ -2,12 +2,12 @@ import type { ReactNode } from "react";
 
 interface Props {
 	iconSrc: string;
-	text: string;
+	content: ReactNode;
 	name: string;
 	id: string;
 }
 
-export function Component({ iconSrc, text, name, id }: Props): ReactNode {
+export function Component({ iconSrc, content, name, id }: Props): ReactNode {
 	return (
 		<div
 			lang="ja-JP"
@@ -41,20 +41,10 @@ export function Component({ iconSrc, text, name, id }: Props): ReactNode {
 					flexDirection: "column",
 					alignItems: "center",
 					flexGrow: 1,
-					gap: "24px",
 				}}
 			>
-				<div
-					style={{
-						display: "flex",
-						flexDirection: "column",
-						alignItems: "center",
-						textAlign: "center",
-					}}
-				>
-					{text.split("\n").map((line, index) => (
-						<span key={index}>{line}</span>
-					))}
+				<div style={{ width: "100%", textAlign: "left", display: "flex" }}>
+					{content}
 				</div>
 				<div
 					style={{
