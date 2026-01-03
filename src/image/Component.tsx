@@ -51,6 +51,8 @@ export function Component({ iconSrc, content, name, id }: Props): ReactNode {
 						display: "flex",
 						flexDirection: "column",
 						alignItems: "center",
+						marginTop: "24px",
+						gap: "4px",
 					}}
 				>
 					<span
