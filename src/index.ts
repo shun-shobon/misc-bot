@@ -24,6 +24,7 @@ import {
 	handleSlashCommand,
 	handleUserCommand,
 } from "./handler";
+import { generateImage } from "./image";
 
 const yoga = await initYoga(WASM_YOGA);
 initSatori(yoga);
@@ -34,6 +35,19 @@ const app = new Hono<{ Bindings: Env }>();
 
 app
 	.get("/", (c) => c.text("Hello, World!"))
+	.get("/preview", async (c) => {
+		const image = await generateImage({
+			iconUrl: c.req.query("iconUrl") ?? "https://github.com/shun-shobon.png",
+			text:
+				c.req.query("text") ??
+				"# h1\n## h2\n### h3\n---\n**bold** _italic_ ~~strikethrough~~ `inline code`\n長野高専東京タワーの上にあるからな",
+			name: c.req.query("name") ?? "SHUN",
+			id: c.req.query("id") ?? "shun_shobon",
+		});
+		return new Response(image, {
+			headers: { "Content-Type": "image/png" },
+		});
+	})
 	.post("/interactions", interactionVerifier, async (c) => {
 		const interaction: APIInteraction = await c.req.json();
 

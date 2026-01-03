@@ -51,6 +51,8 @@ export function Component({ iconSrc, content, name, id }: Props): ReactNode {
 						display: "flex",
 						flexDirection: "column",
 						alignItems: "center",
+						marginTop: "24px",
+						gap: "4px",
 					}}
 				>
 					<span
@@ -64,8 +66,8 @@ export function Component({ iconSrc, content, name, id }: Props): ReactNode {
 					<span
 						style={{
 							fontSize: "20px",
-							color: "#878787",
 							textAlign: "center",
+							opacity: 0.65,
 						}}
 					>
 						@{id}
