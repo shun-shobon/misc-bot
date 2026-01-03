@@ -149,4 +149,30 @@ describe("renderMarkdown", () => {
 		expect(codeBlocks).toHaveLength(1);
 		expect(collectText(codeBlocks[0]).join("")).toBe("line1\n\nline2");
 	});
+
+	it("segments Japanese text and wraps in span elements", async () => {
+		const tree = await renderMarkdown("今日はいい天気ですね。", {
+			mentionNames: {},
+			loadCustomEmoji: vi.fn(),
+		});
+
+		const text = collectText(tree).join("");
+		expect(text).toContain("今日はいい天気ですね。");
+	});
+
+	it("does not segment text inside code blocks", async () => {
+		const tree = await renderMarkdown("```\n今日はいい天気ですね。\n```", {
+			mentionNames: {},
+			loadCustomEmoji: vi.fn(),
+		});
+
+		const codeBlocks = findElements(tree, "div").filter(
+			(el) =>
+				(el.props as { style?: Record<string, unknown> }).style?.[
+					"whiteSpace"
+				] === "pre-wrap",
+		);
+		expect(codeBlocks).toHaveLength(1);
+		expect(collectText(codeBlocks[0]).join("")).toBe("今日はいい天気ですね。");
+	});
 });
