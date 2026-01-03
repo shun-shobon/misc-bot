@@ -7,6 +7,8 @@ import type {
 import SimpleMarkdown from "@khanacademy/simple-markdown";
 import type { ReactNode } from "react";
 
+import { segmentText } from "./budoux";
+
 type MentionMap = Record<string, string>;
 
 interface TextNode {
@@ -259,7 +261,7 @@ async function renderNode(
 ): Promise<ReactNode | ReactNode[]> {
 	switch (node.type) {
 		case "text":
-			return node.content;
+			return segmentText(node.content);
 		case "paragraph": {
 			const children = await renderNodes(node.content, ctx);
 			return <div style={styles.paragraph}>{children}</div>;
