@@ -1,6 +1,6 @@
 import type { Capture, Parser, ParserRules, State } from "@khanacademy/simple-markdown";
 import SimpleMarkdown from "@khanacademy/simple-markdown";
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 
 import { segmentText } from "./budoux";
 
@@ -234,14 +234,13 @@ const styles = {
 		objectFit: "contain",
 		verticalAlign: "middle",
 	},
-} satisfies Record<string, React.CSSProperties | React.CSSProperties[]>;
+} satisfies Record<string, CSSProperties | CSSProperties[]>;
 
 async function renderNodes(nodes: MarkdownAst, ctx: RenderContext): Promise<ReactNode[]> {
 	const rendered = await Promise.all(nodes.map(async (node) => await renderNode(node, ctx)));
 	return rendered.flat();
 }
 
-// eslint-disable-next-line complexity
 async function renderNode(
 	node: MarkdownNode,
 	ctx: RenderContext,
@@ -313,6 +312,7 @@ async function renderNode(
 
 export async function renderMarkdown(text: string, ctx: RenderContext): Promise<ReactNode> {
 	const normalized = normalizeLineBreaks(text);
+	// oxlint-disable-next-line typescript/no-unsafe-type-assertion -- simple-markdown の型はカスタムルールが返すノードの形を表現できない
 	const ast = parser(normalized, { inline: false }) as MarkdownAst;
 	const children = await renderNodes(ast, ctx);
 

@@ -1,22 +1,17 @@
 import { initWasm } from "@resvg/resvg-wasm";
 import WASM_RESVG from "@resvg/resvg-wasm/index_bg.wasm";
-import type {
-	APIChatInputApplicationCommandInteraction,
-	APIInteraction,
-	APIInteractionResponse,
-	APIMessageApplicationCommandInteraction,
-	APIUserApplicationCommandInteraction,
-} from "discord-api-types/v10";
-import {
-	ApplicationCommandType,
-	InteractionResponseType,
-	InteractionType,
-} from "discord-api-types/v10";
+import { isChatInputApplicationCommandInteraction } from "discord-api-types/utils/v10";
+import type { APIInteraction, APIInteractionResponse } from "discord-api-types/v10";
+import { InteractionResponseType, InteractionType } from "discord-api-types/v10";
 import { Hono } from "hono";
 import { init as initSatori } from "satori/standalone";
 import WASM_SATORI from "satori/yoga.wasm";
 
-import { interactionVerifier } from "./discord";
+import {
+	interactionVerifier,
+	isMessageCommandInteraction,
+	isUserCommandInteraction,
+} from "./discord";
 import {
 	handleMessageCommand,
 	handleModalSubmit,
@@ -55,27 +50,14 @@ app
 					type: InteractionResponseType.Pong,
 				});
 			case InteractionType.ApplicationCommand:
-				switch (interaction.data.type) {
-					case ApplicationCommandType.ChatInput: {
-						const res = handleSlashCommand(
-							interaction as APIChatInputApplicationCommandInteraction,
-						);
-
-						return c.json(res);
-					}
-					case ApplicationCommandType.Message: {
-						const res = handleMessageCommand(
-							interaction as APIMessageApplicationCommandInteraction,
-							c.env,
-							c.executionCtx,
-						);
-						return c.json(res);
-					}
-					case ApplicationCommandType.User: {
-						const res = handleUserCommand(interaction as APIUserApplicationCommandInteraction);
-
-						return c.json(res);
-					}
+				if (isChatInputApplicationCommandInteraction(interaction)) {
+					return c.json(handleSlashCommand(interaction));
+				}
+				if (isMessageCommandInteraction(interaction)) {
+					return c.json(handleMessageCommand(interaction, c.env, c.executionCtx));
+				}
+				if (isUserCommandInteraction(interaction)) {
+					return c.json(handleUserCommand(interaction));
 				}
 
 				break;
@@ -84,6 +66,9 @@ app
 
 				return c.json(res);
 			}
+			case InteractionType.MessageComponent:
+			case InteractionType.ApplicationCommandAutocomplete:
+				break;
 		}
 
 		return c.text("Unknown interaction type", 400);

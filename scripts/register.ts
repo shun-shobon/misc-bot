@@ -25,7 +25,7 @@ const token = process.env["DISCORD_BOT_TOKEN"];
 const applicationId = process.env["DISCORD_APPLICATION_ID"];
 const guildId = process.env["DISCORD_GUILD_ID"];
 
-if (!token || !applicationId) {
+if (token == null || token === "" || applicationId == null || applicationId === "") {
 	throw new Error("DISCORD_TOKEN or DISCORD_APPLICATION_ID is not set");
 }
 
@@ -38,7 +38,6 @@ const commands = [
 
 const rest = new REST({ version: "10" }).setToken(token);
 
-// eslint-disable-next-line unicorn/prefer-ternary
 if (guildId != null) {
 	await rest.put(Routes.applicationGuildCommands(applicationId, guildId), {
 		body: commands,

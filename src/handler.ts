@@ -6,9 +6,7 @@ import type {
 	APIMessageApplicationCommandInteraction,
 	APIMessageTopLevelComponent,
 	APIModalSubmitInteraction,
-	APIModalSubmitTextInputComponent,
 	APIUserApplicationCommandInteraction,
-	ModalSubmitLabelComponent,
 } from "discord-api-types/v10";
 import {
 	ApplicationCommandOptionType,
@@ -81,15 +79,10 @@ export function handleModalSubmit(
 	env: Env,
 	ctx: ExecutionContext,
 ): APIInteractionResponse {
-	const customId = interaction.data.custom_id;
-	const [command, ...rest] = customId.split(":");
+	const [command, userId] = interaction.data.custom_id.split(":");
 
-	switch (command) {
-		case "quote": {
-			const userId = rest[0]!;
-
-			return handleQuoteModalSubmit(interaction, userId, env, ctx);
-		}
+	if (command === "quote" && userId != null) {
+		return handleQuoteModalSubmit(interaction, userId, env, ctx);
 	}
 
 	return createErrorMessage();
@@ -101,13 +94,16 @@ function handleQuoteModalSubmit(
 	env: Env,
 	ctx: ExecutionContext,
 ): APIInteractionResponse {
-	const textInput = (interaction.data.components[0] as ModalSubmitLabelComponent)
-		.component as APIModalSubmitTextInputComponent;
-	if (textInput.custom_id !== "text") {
-		throw new Error("Invalid custom id");
+	const label = interaction.data.components[0];
+	if (
+		label?.type !== ComponentType.Label ||
+		label.component.type !== ComponentType.TextInput ||
+		label.component.custom_id !== "text"
+	) {
+		throw new Error("Invalid modal submission");
 	}
 
-	const text = textInput.value;
+	const text = label.component.value;
 
 	enqueueFollowUp(ctx, async () => {
 		await sendQuoteFollowUp({
@@ -166,9 +162,7 @@ async function sendQuoteFollowUp({
 	const rest = new REST({ version: "10" }).setToken(env.DISCORD_BOT_TOKEN);
 
 	try {
-		const member = (await rest.get(
-			Routes.guildMember(env.DISCORD_GUILD_ID, memberId),
-		)) as APIGuildMember;
+		const member = await fetchGuildMember(rest, env, memberId);
 		const mentionNames = await resolveMentionDisplayNames({
 			rest,
 			env,
@@ -254,13 +248,16 @@ function getIconUrl(env: Env, rest: REST, member: APIGuildMember) {
 	return rest.cdn.defaultAvatar(calculateUserDefaultAvatarIndex(member.user.id));
 }
 
-function extractMentionUserIds(text: string): string[] {
-	const pattern = /<@!?(?<id>\d+)>/gu;
-	const ids = new Set<string>();
-	let match: RegExpExecArray | null;
+async function fetchGuildMember(rest: REST, env: Env, userId: string): Promise<APIGuildMember> {
+	// oxlint-disable-next-line typescript/no-unsafe-type-assertion -- REST のレスポンスは unknown 型で返るが、実行時検証のコストに見合わないため Discord API の型を信頼する
+	return (await rest.get(Routes.guildMember(env.DISCORD_GUILD_ID, userId))) as APIGuildMember;
+}
 
-	while ((match = pattern.exec(text)) != null) {
-		const id = match.groups?.["id"];
+function extractMentionUserIds(text: string): string[] {
+	const ids = new Set<string>();
+
+	for (const { groups } of text.matchAll(/<@!?(?<id>\d+)>/gu)) {
+		const id = groups?.["id"];
 		if (id != null) {
 			ids.add(id);
 		}
@@ -285,20 +282,18 @@ async function resolveMentionDisplayNames({
 		return {};
 	}
 
-	const mentionNames: Record<string, string> = {};
-
 	// 既に取得済みの対象メンバーを再利用
-	mentionNames[selfMember.user.id] =
-		selfMember.nick ?? selfMember.user.global_name ?? selfMember.user.username;
+	const mentionNames: Record<string, string> = {
+		[selfMember.user.id]:
+			selfMember.nick ?? selfMember.user.global_name ?? selfMember.user.username,
+	};
 	for (const id of ids) {
 		if (mentionNames[id] != null) {
 			continue;
 		}
 
 		try {
-			const member = (await rest.get(
-				Routes.guildMember(env.DISCORD_GUILD_ID, id),
-			)) as APIGuildMember;
+			const member = await fetchGuildMember(rest, env, id);
 			mentionNames[id] = member.nick ?? member.user.global_name ?? member.user.username;
 		} catch (error) {
 			console.warn("Failed to resolve mention", { id, error });
