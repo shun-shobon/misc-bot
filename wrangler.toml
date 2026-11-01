@@ -4,3 +4,6 @@ main = "src/index.ts"
 
 [observability]
 enabled = true
+
+[secrets]
+required = ["DISCORD_BOT_TOKEN", "DISCORD_GUILD_ID", "DISCORD_PUBLIC_KEY"]
