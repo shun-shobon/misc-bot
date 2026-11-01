@@ -35,7 +35,7 @@
 	"devDependencies": {
 		"@shun-shobon/oxfmt-config": "7.1.0",
 		"@shun-shobon/oxlint-config": "7.1.0",
-		"@tsconfig/node-lts": "22.0.2",
+		"@tsconfig/node26": "26.0.1",
 		"@tsconfig/strictest": "2.0.8",
 		"@types/node": "26.6.6",
 		"@types/react": "19.3.0",
@@ -43,7 +43,7 @@
 		"oxfmt": "0.72.0",
 		"oxlint": "1.90.0",
 		"oxlint-tsgolint": "7.0.2005",
-		"typescript": "5.9.3",
+		"typescript": "7.0.2",
 		"vite": "8.3.5",
 		"vitest": "5.0.5",
 		"wrangler": "4.155.0"
