@@ -1,8 +1,4 @@
-export async function fetchFont(
-	text: string,
-	name: string,
-	weight: number,
-): Promise<ArrayBuffer> {
+export async function fetchFont(text: string, name: string, weight: number): Promise<ArrayBuffer> {
 	const url = new URL("https://fonts.googleapis.com/css2");
 	url.searchParams.append("family", `${name}:wght@${weight}`);
 	url.searchParams.append("text", text);
@@ -20,8 +16,7 @@ export async function fetchFont(
 
 	const css = await cssRes.text();
 
-	const resource =
-		/src: url\((?<fontUrl>.+)\) format\('(?:opentype|truetype)'\)/u.exec(css);
+	const resource = /src: url\((?<fontUrl>.+)\) format\('(?:opentype|truetype)'\)/u.exec(css);
 
 	const fontUrl = resource?.groups?.["fontUrl"];
 

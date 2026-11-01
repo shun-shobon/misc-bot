@@ -1,20 +1,19 @@
 {
 	"name": "misc-bot",
 	"version": "0.0.1",
-	"type": "module",
-	"author": "NISHIZAWA Shuntaro <me@s2n.tech>",
-	"license": "MIT",
 	"private": true,
-	"packageManager": "pnpm@12.16.1",
+	"license": "MIT",
+	"author": "NISHIZAWA Shuntaro <me@s2n.tech>",
+	"type": "module",
 	"main": "dist/index.js",
 	"scripts": {
 		"build": "wrangler deploy --dry-run --minify --outdir dist",
 		"deploy": "wrangler deploy --minify",
 		"dev": "wrangler dev",
-		"format": "prettier --write .",
-		"format:check": "prettier --check .",
-		"lint": "eslint",
-		"lint:fix": "eslint --fix",
+		"format": "oxfmt",
+		"format:check": "oxfmt --check",
+		"lint": "oxlint",
+		"lint:fix": "oxlint --fix",
 		"register": "node --experimental-transform-types scripts/register.ts",
 		"start": "wrangler dev",
 		"test": "vitest run",
@@ -34,17 +33,20 @@
 		"ts-pattern": "5.9.2"
 	},
 	"devDependencies": {
-		"@shun-shobon/style-guide": "1.1.1",
+		"@shun-shobon/oxfmt-config": "7.1.0",
+		"@shun-shobon/oxlint-config": "7.1.0",
 		"@tsconfig/node-lts": "22.0.2",
 		"@tsconfig/strictest": "2.0.8",
 		"@types/node": "26.6.6",
 		"@types/react": "19.3.0",
 		"discord-api-types": "0.38.57",
-		"eslint": "9.39.1",
-		"prettier": "3.7.3",
+		"oxfmt": "0.72.0",
+		"oxlint": "1.90.0",
+		"oxlint-tsgolint": "7.0.2005",
 		"typescript": "5.9.3",
 		"vite": "8.3.5",
 		"vitest": "5.0.5",
 		"wrangler": "4.155.0"
-	}
+	},
+	"packageManager": "pnpm@12.16.1"
 }

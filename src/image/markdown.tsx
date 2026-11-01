@@ -1,9 +1,4 @@
-import type {
-	Capture,
-	Parser,
-	ParserRules,
-	State,
-} from "@khanacademy/simple-markdown";
+import type { Capture, Parser, ParserRules, State } from "@khanacademy/simple-markdown";
 import SimpleMarkdown from "@khanacademy/simple-markdown";
 import type { ReactNode } from "react";
 
@@ -99,10 +94,7 @@ const TEXT_ORDER = SimpleMarkdown.defaultRules.text.order;
 const EM_ORDER = SimpleMarkdown.defaultRules.em.order;
 
 const rules: ParserRules = {
-	...(SimpleMarkdown.defaultRules as Omit<
-		typeof SimpleMarkdown.defaultRules,
-		"Array"
-	>),
+	...(SimpleMarkdown.defaultRules as Omit<typeof SimpleMarkdown.defaultRules, "Array">),
 	mention: {
 		order: TEXT_ORDER - 0.5,
 		match: SimpleMarkdown.inlineRegex(/^<@!?(?<id>\d+)>/u),
@@ -244,13 +236,8 @@ const styles = {
 	},
 } satisfies Record<string, React.CSSProperties | React.CSSProperties[]>;
 
-async function renderNodes(
-	nodes: MarkdownAst,
-	ctx: RenderContext,
-): Promise<ReactNode[]> {
-	const rendered = await Promise.all(
-		nodes.map(async (node) => await renderNode(node, ctx)),
-	);
+async function renderNodes(nodes: MarkdownAst, ctx: RenderContext): Promise<ReactNode[]> {
+	const rendered = await Promise.all(nodes.map(async (node) => await renderNode(node, ctx)));
 	return rendered.flat();
 }
 
@@ -289,21 +276,14 @@ async function renderNode(
 			return <div style={styles.codeBlock}>{node.content}</div>;
 		case "blockQuote": {
 			const children = await renderNodes(node.content, ctx);
-			return (
-				<div style={{ ...styles.paragraph, ...styles.blockquote }}>
-					{children}
-				</div>
-			);
+			return <div style={{ ...styles.paragraph, ...styles.blockquote }}>{children}</div>;
 		}
 		case "list": {
 			const items = await Promise.all(
 				node.items.map(async (item, index) => {
 					const children = await renderNodes(item, ctx);
 					return (
-						<div
-							key={`li-${index.toString()}`}
-							style={{ display: "flex", flexDirection: "row" }}
-						>
+						<div key={`li-${index.toString()}`} style={{ display: "flex", flexDirection: "row" }}>
 							<span style={{ marginRight: "8px" }}>•</span>
 							<span>{children}</span>
 						</div>
@@ -321,11 +301,7 @@ async function renderNode(
 			return <span style={styles.spoiler}>{children}</span>;
 		}
 		case "mention":
-			return (
-				<span style={styles.mention}>
-					@{ctx.mentionNames[node.userId] ?? "unknown"}
-				</span>
-			);
+			return <span style={styles.mention}>@{ctx.mentionNames[node.userId] ?? "unknown"}</span>;
 		case "customEmoji": {
 			const src = await ctx.loadCustomEmoji(node.id, node.animated);
 			return <img src={src} style={styles.customEmoji} alt="emoji" />;
@@ -335,10 +311,7 @@ async function renderNode(
 	}
 }
 
-export async function renderMarkdown(
-	text: string,
-	ctx: RenderContext,
-): Promise<ReactNode> {
+export async function renderMarkdown(text: string, ctx: RenderContext): Promise<ReactNode> {
 	const normalized = normalizeLineBreaks(text);
 	const ast = parser(normalized, { inline: false }) as MarkdownAst;
 	const children = await renderNodes(ast, ctx);

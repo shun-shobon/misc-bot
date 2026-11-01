@@ -72,9 +72,7 @@ app
 						return c.json(res);
 					}
 					case ApplicationCommandType.User: {
-						const res = handleUserCommand(
-							interaction as APIUserApplicationCommandInteraction,
-						);
+						const res = handleUserCommand(interaction as APIUserApplicationCommandInteraction);
 
 						return c.json(res);
 					}

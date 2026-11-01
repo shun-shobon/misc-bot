@@ -8,14 +8,10 @@ const EPVS_REGEX = /\uFE0F/gu;
 
 function getIconCode(segment: string): string {
 	// ZWJが含まれない単独の絵文字の場合、末尾のEPVSが含まれるとURLが見つからないため削除する
-	const str = !segment.includes(ZWJ)
-		? segment.replaceAll(EPVS_REGEX, "")
-		: segment;
+	const str = !segment.includes(ZWJ) ? segment.replaceAll(EPVS_REGEX, "") : segment;
 
 	// eslint-disable-next-line typescript/no-misused-spread
-	const codePoints = [...str]
-		.map((c) => c.codePointAt(0)!.toString(16))
-		.join("-");
+	const codePoints = [...str].map((c) => c.codePointAt(0)!.toString(16)).join("-");
 
 	return codePoints;
 }

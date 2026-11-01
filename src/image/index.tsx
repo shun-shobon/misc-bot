@@ -33,12 +33,7 @@ export async function generateImage(params: Params): Promise<Uint8Array> {
 	]);
 
 	const svg = await satori(
-		<Component
-			iconSrc={iconSrc}
-			content={content}
-			name={params.name}
-			id={params.id}
-		/>,
+		<Component iconSrc={iconSrc} content={content} name={params.name} id={params.id} />,
 		{
 			width: 1200,
 			height: 630,

@@ -1,7 +1,4 @@
-import {
-	ContextMenuCommandBuilder,
-	SlashCommandBuilder,
-} from "@discordjs/builders";
+import { ContextMenuCommandBuilder, SlashCommandBuilder } from "@discordjs/builders";
 import { REST } from "@discordjs/rest";
 import { ApplicationCommandType, Routes } from "discord-api-types/v10";
 
@@ -13,10 +10,7 @@ const quoteSlashCommand = new SlashCommandBuilder()
 	.setName("quote")
 	.setDescription("任意のユーザーの名言画像を生成します。")
 	.addUserOption((option) =>
-		option
-			.setName("user")
-			.setDescription("名言を生成するユーザーを指定します。")
-			.setRequired(true),
+		option.setName("user").setDescription("名言を生成するユーザーを指定します。").setRequired(true),
 	);
 
 const quoteMessageCommand = new ContextMenuCommandBuilder()

@@ -14,7 +14,5 @@ export function segmentText(text: string): ReactNode[] {
 
 	const phrases = jaParser.parse(text);
 
-	return phrases.map((phrase, index) => (
-		<span key={`segment-${index}`}>{phrase}</span>
-	));
+	return phrases.map((phrase, index) => <span key={`segment-${index}`}>{phrase}</span>);
 }

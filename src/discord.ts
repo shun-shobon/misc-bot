@@ -9,30 +9,23 @@ import { ApplicationCommandOptionType } from "discord-api-types/v10";
 import { verifyKey } from "discord-interactions";
 import { createMiddleware } from "hono/factory";
 
-export const interactionVerifier = createMiddleware<{ Bindings: Env }>(
-	async (c, next) => {
-		const signature = c.req.header("X-Signature-Ed25519");
-		const timestamp = c.req.header("X-Signature-Timestamp");
-		if (!signature || !timestamp) {
-			return c.text("Invalid request", 400);
-		}
+export const interactionVerifier = createMiddleware<{ Bindings: Env }>(async (c, next) => {
+	const signature = c.req.header("X-Signature-Ed25519");
+	const timestamp = c.req.header("X-Signature-Timestamp");
+	if (!signature || !timestamp) {
+		return c.text("Invalid request", 400);
+	}
 
-		const body = await c.req.text();
-		const isValid = await verifyKey(
-			body,
-			signature,
-			timestamp,
-			c.env.DISCORD_PUBLIC_KEY,
-		);
+	const body = await c.req.text();
+	const isValid = await verifyKey(body, signature, timestamp, c.env.DISCORD_PUBLIC_KEY);
 
-		if (!isValid) {
-			return c.text("Unauthorized", 401);
-		}
+	if (!isValid) {
+		return c.text("Unauthorized", 401);
+	}
 
-		await next();
-		return undefined;
-	},
-);
+	await next();
+	return undefined;
+});
 
 type Option = Exclude<
 	APIApplicationCommandInteractionDataOption<InteractionType.ApplicationCommand>,
@@ -40,9 +33,7 @@ type Option = Exclude<
 	| APIApplicationCommandInteractionDataSubcommandOption<InteractionType.ApplicationCommand>
 >;
 
-export function parseCommand(
-	interactionData: APIChatInputApplicationCommandInteractionData,
-): {
+export function parseCommand(interactionData: APIChatInputApplicationCommandInteractionData): {
 	commands: string[];
 	options: Record<string, Option>;
 } {

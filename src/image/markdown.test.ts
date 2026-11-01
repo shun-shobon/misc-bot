@@ -24,10 +24,7 @@ function collectText(node: ReactNode | undefined): string[] {
 	return [];
 }
 
-function findElements(
-	node: ReactNode | undefined,
-	type: string,
-): ReactElement[] {
+function findElements(node: ReactNode | undefined, type: string): ReactElement[] {
 	const results: AnyElement[] = [];
 
 	const visit = (current: ReactNode | undefined): void => {
@@ -82,12 +79,8 @@ describe("renderMarkdown", () => {
 			throw new Error("Unexpected image element count");
 		}
 		const [first, second] = imgs as [AnyElement, AnyElement];
-		expect((first.props as { src?: string }).src).toBe(
-			"data:image/gif;base64,aaa",
-		);
-		expect((second.props as { src?: string }).src).toBe(
-			"data:image/png;base64,bbb",
-		);
+		expect((first.props as { src?: string }).src).toBe("data:image/gif;base64,aaa");
+		expect((second.props as { src?: string }).src).toBe("data:image/png;base64,bbb");
 		expect(loadCustomEmoji).toHaveBeenCalledWith("42", false);
 		expect(loadCustomEmoji).toHaveBeenCalledWith("43", true);
 	});
@@ -102,9 +95,7 @@ describe("renderMarkdown", () => {
 		expect(text).toContain("secret");
 
 		const spoiler = findElements(tree, "span").find(
-			(el) =>
-				(el.props as { style?: Record<string, unknown> }).style?.["border"] !=
-				null,
+			(el) => (el.props as { style?: Record<string, unknown> }).style?.["border"] != null,
 		);
 		expect(spoiler).toBeDefined();
 	});
@@ -118,9 +109,7 @@ describe("renderMarkdown", () => {
 		const spans = findElements(tree, "span");
 		const link = spans.find(
 			(el) =>
-				(el.props as { style?: Record<string, unknown> }).style?.[
-					"textDecoration"
-				] === "underline",
+				(el.props as { style?: Record<string, unknown> }).style?.["textDecoration"] === "underline",
 		);
 		expect(link).toBeDefined();
 		expect(link?.type).toBe("span");
@@ -142,9 +131,7 @@ describe("renderMarkdown", () => {
 
 		const codeBlocks = findElements(tree, "div").filter(
 			(el) =>
-				(el.props as { style?: Record<string, unknown> }).style?.[
-					"whiteSpace"
-				] === "pre-wrap",
+				(el.props as { style?: Record<string, unknown> }).style?.["whiteSpace"] === "pre-wrap",
 		);
 		expect(codeBlocks).toHaveLength(1);
 		expect(collectText(codeBlocks[0]).join("")).toBe("line1\n\nline2");
@@ -168,9 +155,7 @@ describe("renderMarkdown", () => {
 
 		const codeBlocks = findElements(tree, "div").filter(
 			(el) =>
-				(el.props as { style?: Record<string, unknown> }).style?.[
-					"whiteSpace"
-				] === "pre-wrap",
+				(el.props as { style?: Record<string, unknown> }).style?.["whiteSpace"] === "pre-wrap",
 		);
 		expect(codeBlocks).toHaveLength(1);
 		expect(collectText(codeBlocks[0]).join("")).toBe("今日はいい天気ですね。");

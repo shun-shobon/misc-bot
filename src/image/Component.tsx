@@ -43,9 +43,7 @@ export function Component({ iconSrc, content, name, id }: Props): ReactNode {
 					flexGrow: 1,
 				}}
 			>
-				<div style={{ width: "100%", textAlign: "left", display: "flex" }}>
-					{content}
-				</div>
+				<div style={{ width: "100%", textAlign: "left", display: "flex" }}>{content}</div>
 				<div
 					style={{
 						display: "flex",

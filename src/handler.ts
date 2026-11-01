@@ -30,16 +30,13 @@ export function handleSlashCommand(
 	const result = parseCommand(interaction.data);
 
 	const response = match(result)
-		.with(
-			{ commands: ["ping"] },
-			(): APIInteractionResponse => ({
-				type: InteractionResponseType.ChannelMessageWithSource,
-				data: {
-					content: "pong!",
-					flags: MessageFlags.Ephemeral,
-				},
-			}),
-		)
+		.with({ commands: ["ping"] }, (): APIInteractionResponse => ({
+			type: InteractionResponseType.ChannelMessageWithSource,
+			data: {
+				content: "pong!",
+				flags: MessageFlags.Ephemeral,
+			},
+		}))
 		.with(
 			{
 				commands: ["quote"],
@@ -104,9 +101,8 @@ function handleQuoteModalSubmit(
 	env: Env,
 	ctx: ExecutionContext,
 ): APIInteractionResponse {
-	const textInput = (
-		interaction.data.components[0] as ModalSubmitLabelComponent
-	).component as APIModalSubmitTextInputComponent;
+	const textInput = (interaction.data.components[0] as ModalSubmitLabelComponent)
+		.component as APIModalSubmitTextInputComponent;
 	if (textInput.custom_id !== "text") {
 		throw new Error("Invalid custom id");
 	}
@@ -130,8 +126,7 @@ function handleQuoteMessageCommand(
 	interaction: APIMessageApplicationCommandInteraction,
 	ctx: ExecutionContext,
 ): APIInteractionResponse {
-	const message =
-		interaction.data.resolved.messages[interaction.data.target_id]!;
+	const message = interaction.data.resolved.messages[interaction.data.target_id]!;
 
 	enqueueFollowUp(ctx, async () => {
 		await sendQuoteFollowUp({
@@ -145,10 +140,7 @@ function handleQuoteMessageCommand(
 	return createDeferredMessage();
 }
 
-function enqueueFollowUp(
-	ctx: ExecutionContext,
-	promiseFactory: () => Promise<void>,
-): void {
+function enqueueFollowUp(ctx: ExecutionContext, promiseFactory: () => Promise<void>): void {
 	ctx.waitUntil(
 		(async () => {
 			try {
@@ -166,9 +158,7 @@ async function sendQuoteFollowUp({
 	memberId,
 	text,
 }: {
-	interaction:
-		| APIModalSubmitInteraction
-		| APIMessageApplicationCommandInteraction;
+	interaction: APIModalSubmitInteraction | APIMessageApplicationCommandInteraction;
 	env: Env;
 	memberId: string;
 	text: string;
@@ -196,25 +186,22 @@ async function sendQuoteFollowUp({
 			mentionNames,
 		});
 
-		await rest.patch(
-			Routes.webhookMessage(interaction.application_id, interaction.token),
-			{
-				body: {
-					attachments: [
-						{
-							id: 0,
-							filename: "quote.png",
-						},
-					],
-				},
-				files: [
+		await rest.patch(Routes.webhookMessage(interaction.application_id, interaction.token), {
+			body: {
+				attachments: [
 					{
-						data: image,
-						name: "image.png",
+						id: 0,
+						filename: "quote.png",
 					},
 				],
 			},
-		);
+			files: [
+				{
+					data: image,
+					name: "image.png",
+				},
+			],
+		});
 	} catch (error) {
 		await sendErrorFollowUp(rest, interaction, error);
 	}
@@ -222,14 +209,11 @@ async function sendQuoteFollowUp({
 
 async function sendErrorFollowUp(
 	rest: REST,
-	interaction:
-		| APIModalSubmitInteraction
-		| APIMessageApplicationCommandInteraction,
+	interaction: APIModalSubmitInteraction | APIMessageApplicationCommandInteraction,
 	error: unknown,
 ): Promise<void> {
 	console.error("Failed to send error follow-up", error);
-	const message =
-		error instanceof Error ? (error.stack ?? error.message) : String(error);
+	const message = error instanceof Error ? (error.stack ?? error.message) : String(error);
 
 	const component: APIMessageTopLevelComponent = {
 		type: ComponentType.Container,
@@ -237,35 +221,27 @@ async function sendErrorFollowUp(
 		components: [
 			{
 				type: ComponentType.TextDisplay,
-				content: [
-					"### エラーが発生しました <@361444721538891776>",
-					"```",
-					message,
-					"```",
-				].join("\n"),
+				content: ["### エラーが発生しました <@361444721538891776>", "```", message, "```"].join(
+					"\n",
+				),
 			},
 		],
 	};
 
-	await rest.patch(
-		Routes.webhookMessage(interaction.application_id, interaction.token),
-		{
-			body: {
-				flags: MessageFlags.IsComponentsV2,
-				components: [component],
-			},
+	await rest.patch(Routes.webhookMessage(interaction.application_id, interaction.token), {
+		body: {
+			flags: MessageFlags.IsComponentsV2,
+			components: [component],
 		},
-	);
+	});
 }
 
 function getIconUrl(env: Env, rest: REST, member: APIGuildMember) {
 	if (member.avatar != null) {
-		return rest.cdn.guildMemberAvatar(
-			env.DISCORD_GUILD_ID,
-			member.user.id,
-			member.avatar,
-			{ size: 512, extension: "png" },
-		);
+		return rest.cdn.guildMemberAvatar(env.DISCORD_GUILD_ID, member.user.id, member.avatar, {
+			size: 512,
+			extension: "png",
+		});
 	}
 
 	if (member.user.avatar != null) {
@@ -275,9 +251,7 @@ function getIconUrl(env: Env, rest: REST, member: APIGuildMember) {
 		});
 	}
 
-	return rest.cdn.defaultAvatar(
-		calculateUserDefaultAvatarIndex(member.user.id),
-	);
+	return rest.cdn.defaultAvatar(calculateUserDefaultAvatarIndex(member.user.id));
 }
 
 function extractMentionUserIds(text: string): string[] {
@@ -325,8 +299,7 @@ async function resolveMentionDisplayNames({
 			const member = (await rest.get(
 				Routes.guildMember(env.DISCORD_GUILD_ID, id),
 			)) as APIGuildMember;
-			mentionNames[id] =
-				member.nick ?? member.user.global_name ?? member.user.username;
+			mentionNames[id] = member.nick ?? member.user.global_name ?? member.user.username;
 		} catch (error) {
 			console.warn("Failed to resolve mention", { id, error });
 			mentionNames[id] = "unknown";

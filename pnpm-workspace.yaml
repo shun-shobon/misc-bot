@@ -2,8 +2,6 @@ minimumReleaseAge: 4320
 
 allowBuilds:
   esbuild: true
-  sharp: true
-  unrs-resolver: true
   workerd: true
 
 saveExact: true

@@ -1,13 +1,10 @@
 {
-	"extends": [
-		"@tsconfig/node-lts/tsconfig.json",
-		"@tsconfig/strictest/tsconfig.json",
-	],
+	"extends": ["@tsconfig/node-lts/tsconfig.json", "@tsconfig/strictest/tsconfig.json"],
 	"compilerOptions": {
 		"exactOptionalPropertyTypes": false,
 		"module": "preserve",
 		"moduleResolution": "bundler",
-		"jsx": "react-jsx",
+		"jsx": "react-jsx"
 	},
-	"exclude": ["**/node_modules/**", "dist", "*.config.js"],
+	"exclude": ["**/node_modules/**", "dist", "*.config.js"]
 }
