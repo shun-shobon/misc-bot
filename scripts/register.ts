@@ -21,9 +21,11 @@ const quoteUserCommand = new ContextMenuCommandBuilder()
 	.setType(ApplicationCommandType.User)
 	.setName("quote");
 
-const token = process.env["DISCORD_BOT_TOKEN"];
-const applicationId = process.env["DISCORD_APPLICATION_ID"];
-const guildId = process.env["DISCORD_GUILD_ID"];
+// wrangler types が Worker の secret を必須として process.env を型付けするが、このスクリプトは Node.js で動くため未設定があり得る
+const env: Record<string, string | undefined> = process.env;
+const token = env["DISCORD_BOT_TOKEN"];
+const applicationId = env["DISCORD_APPLICATION_ID"];
+const guildId = env["DISCORD_GUILD_ID"];
 
 if (token == null || token === "" || applicationId == null || applicationId === "") {
 	throw new Error("DISCORD_TOKEN or DISCORD_APPLICATION_ID is not set");
