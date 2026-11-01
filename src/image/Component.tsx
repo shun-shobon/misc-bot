@@ -98,6 +98,7 @@ ul { padding-left: 1.2em; text-align: left; }
 	box-decoration-break: clone;
 }
 .emoji { width: 1.2em; height: 1.2em; object-fit: contain; vertical-align: middle; }
+.jumbo .emoji { width: 2.6em; height: 2.6em; }
 .author {
 	flex: none;
 	display: flex;
@@ -131,11 +132,12 @@ addEventListener("load", async () => {
 interface Props {
 	iconUrl: string;
 	content: Child;
+	jumbo: boolean;
 	name: string;
 	id: string;
 }
 
-export function Page({ iconUrl, content, name, id }: Props): JSX.Element {
+export function Page({ iconUrl, content, jumbo, name, id }: Props): JSX.Element {
 	return (
 		<html lang="ja">
 			<head>
@@ -146,7 +148,7 @@ export function Page({ iconUrl, content, name, id }: Props): JSX.Element {
 			<body>
 				<img class="icon" src={iconUrl} alt="" />
 				<main class="main">
-					<div class="content">{content}</div>
+					<div class={jumbo ? "content jumbo" : "content"}>{content}</div>
 					<div class="author">
 						<span class="name">{withTwemoji(name)}</span>
 						<span class="id">@{id}</span>

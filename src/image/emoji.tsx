@@ -7,6 +7,17 @@ const ZWJ = "\u200D";
 // EPVS: VARIATION SELECTOR-16
 const EPVS_REGEX = /\uFE0F/gu;
 const EMOJI_REGEX = /\p{RGI_Emoji}/gv;
+const CUSTOM_EMOJI_REGEX = /<a?:[^:>]+:\d+>/gu;
+
+// Discord は絵文字のみのメッセージを 27 個まで拡大表示する
+const JUMBO_EMOJI_LIMIT = 27;
+
+export function isJumboEmoji(text: string): boolean {
+	const count = [...text.matchAll(EMOJI_REGEX), ...text.matchAll(CUSTOM_EMOJI_REGEX)].length;
+	const rest = text.replaceAll(EMOJI_REGEX, "").replaceAll(CUSTOM_EMOJI_REGEX, "").trim();
+
+	return count > 0 && count <= JUMBO_EMOJI_LIMIT && rest === "";
+}
 
 export function twemojiUrl(segment: string): string {
 	// ZWJが含まれない単独の絵文字の場合、末尾のEPVSが含まれるとURLが見つからないため削除する

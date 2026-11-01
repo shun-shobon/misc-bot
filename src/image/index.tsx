@@ -1,6 +1,7 @@
 import { renderToString } from "hono/jsx/dom/server";
 
 import { HEIGHT, Page, READY_SELECTOR, WIDTH } from "./Component";
+import { isJumboEmoji } from "./emoji";
 import type { MentionMap } from "./markdown";
 import { renderMarkdown } from "./markdown";
 
@@ -15,7 +16,13 @@ interface Params {
 export function renderHtml(params: Params): string {
 	const content = renderMarkdown(params.text, { mentionNames: params.mentionNames ?? {} });
 	const page = renderToString(
-		<Page iconUrl={params.iconUrl} content={content} name={params.name} id={params.id} />,
+		<Page
+			iconUrl={params.iconUrl}
+			content={content}
+			jumbo={isJumboEmoji(params.text)}
+			name={params.name}
+			id={params.id}
+		/>,
 	);
 
 	return `<!doctype html>${page}`;
