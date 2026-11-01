@@ -1,8 +1,8 @@
 import type { Capture, Parser, ParserRules, State } from "@khanacademy/simple-markdown";
 import SimpleMarkdown from "@khanacademy/simple-markdown";
-import type { CSSProperties, ReactNode } from "react";
+import type { Child } from "hono/jsx";
 
-import { segmentText } from "./budoux";
+import { withTwemoji } from "./emoji";
 
 type MentionMap = Record<string, string>;
 
@@ -87,7 +87,6 @@ type MarkdownAst = MarkdownNode[];
 
 interface RenderContext {
 	mentionNames: MentionMap;
-	loadCustomEmoji: (id: string, animated: boolean) => Promise<string>;
 }
 
 const TEXT_ORDER = SimpleMarkdown.defaultRules.text.order;
@@ -124,199 +123,75 @@ const rules: ParserRules = {
 
 const parser = SimpleMarkdown.parserFor(rules);
 
-const styles = {
-	root: {
-		display: "flex",
-		flexDirection: "column",
-		alignItems: "stretch",
-		gap: "12px",
-		width: "100%",
-		color: "#fafafa",
-		textAlign: "center",
-	},
-	paragraph: {
-		display: "flex",
-		flexWrap: "wrap",
-		alignItems: "baseline",
-		justifyContent: "center",
-		gap: "4px",
-		fontSize: "32px",
-		lineHeight: 1.5,
-		wordBreak: "break-word",
-	},
-	heading: [
-		{},
-		{
-			display: "flex",
-			flexWrap: "wrap",
-			alignItems: "baseline",
-			gap: "6px",
-			fontSize: "42px",
-			fontWeight: 700,
-		},
-		{
-			display: "flex",
-			flexWrap: "wrap",
-			alignItems: "baseline",
-			gap: "6px",
-			fontSize: "38px",
-			fontWeight: 700,
-		},
-		{
-			display: "flex",
-			flexWrap: "wrap",
-			alignItems: "baseline",
-			gap: "6px",
-			fontSize: "34px",
-			fontWeight: 700,
-		},
-	],
-	blockquote: {
-		display: "flex",
-		flexDirection: "column",
-		gap: "6px",
-		borderLeft: "4px solid #666",
-		paddingLeft: "12px",
-		color: "#e0e0e0",
-	},
-	list: {
-		display: "flex",
-		flexDirection: "column",
-		gap: "6px",
-		paddingLeft: "24px",
-		lineHeight: 1.5,
-	},
-	strong: { fontWeight: 700 },
-	em: { transform: "skew(-10deg)" },
-	del: { textDecoration: "line-through" },
-	inlineCode: {
-		fontFamily: "'Noto Sans Mono', 'Noto Sans JP'",
-		fontSize: "28px",
-		backgroundColor: "#1c1c1c",
-		padding: "2px 6px",
-		borderRadius: "4px",
-	},
-	codeBlock: {
-		display: "flex",
-		fontFamily: "'Noto Sans Mono', 'Noto Sans JP'",
-		fontSize: "28px",
-		backgroundColor: "#111",
-		padding: "12px",
-		borderRadius: "8px",
-		whiteSpace: "pre-wrap",
-	},
-	link: { color: "#7cc7ff", textDecoration: "underline" },
-	mention: {
-		backgroundColor: "#1f1f1f",
-		padding: "2px 6px",
-		borderRadius: "6px",
-		color: "#cfd9ff",
-		fontWeight: 600,
-	},
-	spoiler: {
-		display: "flex",
-		alignItems: "center",
-		gap: "6px",
-		border: "1px solid #555",
-		borderRadius: "6px",
-		padding: "4px 8px",
-		backgroundColor: "rgba(255,255,255,0.05)",
-	},
-	spoilerLabel: {
-		fontSize: "20px",
-		fontWeight: 700,
-		color: "#ffcc66",
-		marginRight: "6px",
-	},
-	customEmoji: {
-		height: "1.2em",
-		width: "1.2em",
-		objectFit: "contain",
-		verticalAlign: "middle",
-	},
-} satisfies Record<string, CSSProperties | CSSProperties[]>;
-
-async function renderNodes(nodes: MarkdownAst, ctx: RenderContext): Promise<ReactNode[]> {
-	const rendered = await Promise.all(nodes.map(async (node) => await renderNode(node, ctx)));
-	return rendered.flat();
+function renderNodes(nodes: MarkdownAst, ctx: RenderContext): Child[] {
+	return nodes.map((node) => renderNode(node, ctx));
 }
 
-async function renderNode(
-	node: MarkdownNode,
-	ctx: RenderContext,
-): Promise<ReactNode | ReactNode[]> {
+function renderNode(node: MarkdownNode, ctx: RenderContext): Child {
 	switch (node.type) {
 		case "text":
-			return segmentText(node.content);
-		case "paragraph": {
-			const children = await renderNodes(node.content, ctx);
-			return <div style={styles.paragraph}>{children}</div>;
-		}
-		case "heading": {
-			const children = await renderNodes(node.content, ctx);
-			const style = styles.heading[node.level] ?? styles.heading[3];
-			return <div style={{ ...styles.paragraph, ...style }}>{children}</div>;
-		}
-		case "strong": {
-			const children = await renderNodes(node.content, ctx);
-			return <span style={styles.strong}>{children}</span>;
-		}
-		case "em": {
-			const children = await renderNodes(node.content, ctx);
-			return <span style={styles.em}>{children}</span>;
-		}
-		case "del": {
-			const children = await renderNodes(node.content, ctx);
-			return <span style={styles.del}>{children}</span>;
-		}
+			return withTwemoji(node.content);
+		case "paragraph":
+			return <p>{renderNodes(node.content, ctx)}</p>;
+		case "heading":
+			switch (node.level) {
+				case 1:
+					return <h1>{renderNodes(node.content, ctx)}</h1>;
+				case 2:
+					return <h2>{renderNodes(node.content, ctx)}</h2>;
+				default:
+					return <h3>{renderNodes(node.content, ctx)}</h3>;
+			}
+		case "strong":
+			return <strong>{renderNodes(node.content, ctx)}</strong>;
+		case "em":
+			return <em>{renderNodes(node.content, ctx)}</em>;
+		case "del":
+			return <del>{renderNodes(node.content, ctx)}</del>;
 		case "inlineCode":
-			return <span style={styles.inlineCode}>{node.content}</span>;
+			return <code>{withTwemoji(node.content)}</code>;
 		case "codeBlock":
-			return <div style={styles.codeBlock}>{node.content}</div>;
-		case "blockQuote": {
-			const children = await renderNodes(node.content, ctx);
-			return <div style={{ ...styles.paragraph, ...styles.blockquote }}>{children}</div>;
-		}
-		case "list": {
-			const items = await Promise.all(
-				node.items.map(async (item, index) => {
-					const children = await renderNodes(item, ctx);
-					return (
-						<div key={`li-${index.toString()}`} style={{ display: "flex", flexDirection: "row" }}>
-							<span style={{ marginRight: "8px" }}>•</span>
-							<span>{children}</span>
-						</div>
-					);
-				}),
+			return (
+				<pre>
+					<code>{withTwemoji(node.content)}</code>
+				</pre>
 			);
-			return <div style={{ ...styles.paragraph, ...styles.list }}>{items}</div>;
-		}
-		case "link": {
-			const children = await renderNodes(node.content, ctx);
-			return <span style={styles.link}>{children}</span>;
-		}
-		case "spoiler": {
-			const children = await renderNodes(node.content, ctx);
-			return <span style={styles.spoiler}>{children}</span>;
-		}
+		case "blockQuote":
+			return <blockquote>{renderNodes(node.content, ctx)}</blockquote>;
+		case "list":
+			return (
+				<ul>
+					{node.items.map((item) => (
+						<li>{renderNodes(item, ctx)}</li>
+					))}
+				</ul>
+			);
+		case "link":
+			// 画像内のリンクは機能しないため、見た目だけリンクにする
+			return <span class="link">{renderNodes(node.content, ctx)}</span>;
+		case "spoiler":
+			return <span class="spoiler">{renderNodes(node.content, ctx)}</span>;
 		case "mention":
-			return <span style={styles.mention}>@{ctx.mentionNames[node.userId] ?? "unknown"}</span>;
-		case "customEmoji": {
-			const src = await ctx.loadCustomEmoji(node.id, node.animated);
-			return <img src={src} style={styles.customEmoji} alt="emoji" />;
-		}
+			return (
+				<span class="mention">@{withTwemoji(ctx.mentionNames[node.userId] ?? "unknown")}</span>
+			);
+		case "customEmoji":
+			return <img class="emoji" src={customEmojiUrl(node.id, node.animated)} alt="" />;
 		default:
 			return "";
 	}
 }
 
-export async function renderMarkdown(text: string, ctx: RenderContext): Promise<ReactNode> {
+function customEmojiUrl(id: string, animated: boolean): string {
+	return `https://cdn.discordapp.com/emojis/${id}.${animated ? "gif" : "png"}`;
+}
+
+export function renderMarkdown(text: string, ctx: RenderContext): Child {
 	const normalized = normalizeLineBreaks(text);
 	// oxlint-disable-next-line typescript/no-unsafe-type-assertion -- simple-markdown の型はカスタムルールが返すノードの形を表現できない
 	const ast = parser(normalized, { inline: false }) as MarkdownAst;
-	const children = await renderNodes(ast, ctx);
 
-	return <div style={styles.root}>{children}</div>;
+	return renderNodes(ast, ctx);
 }
 
 export function normalizeLineBreaks(input: string): string {

@@ -24,12 +24,8 @@
 		"@discordjs/builders": "1.14.1",
 		"@discordjs/rest": "2.6.3",
 		"@khanacademy/simple-markdown": "4.0.2",
-		"@resvg/resvg-wasm": "2.6.2",
-		"budoux": "0.10.2",
 		"discord-interactions": "4.4.0",
 		"hono": "4.13.14",
-		"react": "19.3.1",
-		"satori": "0.32.0",
 		"ts-pattern": "5.9.2"
 	},
 	"devDependencies": {
@@ -38,7 +34,6 @@
 		"@tsconfig/node26": "26.0.1",
 		"@tsconfig/strictest": "2.0.8",
 		"@types/node": "26.6.6",
-		"@types/react": "19.3.0",
 		"discord-api-types": "0.38.57",
 		"oxfmt": "0.72.0",
 		"oxlint": "1.90.0",

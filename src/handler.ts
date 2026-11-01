@@ -172,7 +172,7 @@ async function sendQuoteFollowUp({
 
 		const iconUrl = getIconUrl(env, rest, member);
 
-		const image = await generateImage({
+		const image = await generateImage(env.BROWSER, {
 			iconUrl,
 			text,
 			name: member.nick ?? member.user.global_name ?? member.user.username,

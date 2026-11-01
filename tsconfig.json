@@ -4,7 +4,8 @@
 		"exactOptionalPropertyTypes": false,
 		"module": "preserve",
 		"moduleResolution": "bundler",
-		"jsx": "react-jsx"
+		"jsx": "react-jsx",
+		"jsxImportSource": "hono/jsx"
 	},
 	"exclude": ["**/node_modules/**", "dist", "*.config.js"]
 }
