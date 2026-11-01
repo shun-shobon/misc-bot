@@ -1,5 +1,5 @@
 import { Resvg } from "@resvg/resvg-wasm";
-import satori from "satori/wasm";
+import satori from "satori/standalone";
 
 import { encodeBase64 } from "../utils";
 import { Component } from "./Component";

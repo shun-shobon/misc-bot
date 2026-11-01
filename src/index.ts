@@ -13,9 +13,8 @@ import {
 	InteractionType,
 } from "discord-api-types/v10";
 import { Hono } from "hono";
-import { init as initSatori } from "satori/wasm";
-import initYoga from "yoga-wasm-web";
-import WASM_YOGA from "yoga-wasm-web/dist/yoga.wasm";
+import { init as initSatori } from "satori/standalone";
+import WASM_SATORI from "satori/yoga.wasm";
 
 import { interactionVerifier } from "./discord";
 import {
@@ -26,8 +25,7 @@ import {
 } from "./handler";
 import { generateImage } from "./image";
 
-const yoga = await initYoga(WASM_YOGA);
-initSatori(yoga);
+await initSatori(WASM_SATORI);
 
 await initWasm(WASM_RESVG);
 

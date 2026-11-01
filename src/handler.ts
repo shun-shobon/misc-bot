@@ -18,6 +18,7 @@ import {
 	Routes,
 	TextInputStyle,
 } from "discord-api-types/v10";
+import type { ExecutionContext } from "hono";
 import { match, P } from "ts-pattern";
 
 import { parseCommand } from "./discord";
