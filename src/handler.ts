@@ -9,11 +9,11 @@ import type {
 	APIUserApplicationCommandInteraction,
 } from "discord-api-types/v10";
 import {
-	ApplicationCommandOptionType,
 	ComponentType,
 	InteractionResponseType,
 	MessageFlags,
 	Routes,
+	SelectMenuDefaultValueType,
 	TextInputStyle,
 } from "discord-api-types/v10";
 import type { ExecutionContext } from "hono";
@@ -35,15 +35,7 @@ export function handleSlashCommand(
 				flags: MessageFlags.Ephemeral,
 			},
 		}))
-		.with(
-			{
-				commands: ["quote"],
-				options: {
-					user: P.when((o) => o.type === ApplicationCommandOptionType.User),
-				},
-			},
-			({ options: { user } }) => createQuoteModal(user.value),
-		)
+		.with({ commands: ["quote"] }, () => createQuoteModal())
 		.with(P._, (): APIInteractionResponse => createErrorMessage())
 		.exhaustive();
 
@@ -79,10 +71,9 @@ export function handleModalSubmit(
 	env: Env,
 	ctx: ExecutionContext,
 ): APIInteractionResponse {
-	const [command, userId] = interaction.data.custom_id.split(":");
-
-	if (command === "quote" && userId != null) {
-		return handleQuoteModalSubmit(interaction, userId, env, ctx);
+	switch (interaction.data.custom_id) {
+		case "quote":
+			return handleQuoteModalSubmit(interaction, env, ctx);
 	}
 
 	return createErrorMessage();
@@ -90,20 +81,26 @@ export function handleModalSubmit(
 
 function handleQuoteModalSubmit(
 	interaction: APIModalSubmitInteraction,
-	userId: string,
 	env: Env,
 	ctx: ExecutionContext,
 ): APIInteractionResponse {
-	const label = interaction.data.components[0];
+	const components = interaction.data.components.flatMap((c) =>
+		c.type === ComponentType.Label ? [c.component] : [],
+	);
+	const userSelect = components.find((c) => c.custom_id === "user");
+	const textInput = components.find((c) => c.custom_id === "text");
 	if (
-		label?.type !== ComponentType.Label ||
-		label.component.type !== ComponentType.TextInput ||
-		label.component.custom_id !== "text"
+		userSelect?.type !== ComponentType.UserSelect ||
+		textInput?.type !== ComponentType.TextInput
 	) {
 		throw new Error("Invalid modal submission");
 	}
 
-	const text = label.component.value;
+	const userId = userSelect.values[0];
+	if (userId == null) {
+		throw new Error("Invalid modal submission");
+	}
+	const text = textInput.value;
 
 	enqueueFollowUp(ctx, async () => {
 		await sendQuoteFollowUp({
@@ -304,13 +301,26 @@ async function resolveMentionDisplayNames({
 	return mentionNames;
 }
 
-function createQuoteModal(userId: string): APIInteractionResponse {
+function createQuoteModal(defaultUserId?: string): APIInteractionResponse {
 	return {
 		type: InteractionResponseType.Modal,
 		data: {
-			custom_id: `quote:${userId}`,
+			custom_id: "quote",
 			title: "名言画像を生成",
 			components: [
+				{
+					type: ComponentType.Label,
+					label: "ユーザー",
+					component: {
+						type: ComponentType.UserSelect,
+						custom_id: "user",
+						min_values: 1,
+						max_values: 1,
+						...(defaultUserId != null && {
+							default_values: [{ id: defaultUserId, type: SelectMenuDefaultValueType.User }],
+						}),
+					},
+				},
 				{
 					type: ComponentType.Label,
 					label: "内容",

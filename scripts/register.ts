@@ -8,10 +8,7 @@ const pingSlashCommand = new SlashCommandBuilder()
 
 const quoteSlashCommand = new SlashCommandBuilder()
 	.setName("quote")
-	.setDescription("任意のユーザーの名言画像を生成します。")
-	.addUserOption((option) =>
-		option.setName("user").setDescription("名言を生成するユーザーを指定します。").setRequired(true),
-	);
+	.setDescription("任意のユーザーの名言画像を生成します。");
 
 const quoteMessageCommand = new ContextMenuCommandBuilder()
 	.setType(ApplicationCommandType.Message)
