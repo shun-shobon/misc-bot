@@ -1,7 +1,13 @@
+minimumReleaseAge: 4320
+
+allowBuilds:
+  esbuild: true
+  sharp: true
+  unrs-resolver: true
+  workerd: true
+
 saveExact: true
 
-onlyBuiltDependencies:
-  - esbuild
-  - sharp
-  - unrs-resolver
-  - workerd
+strictDepBuilds: true
+
+trustPolicy: no-downgrade
